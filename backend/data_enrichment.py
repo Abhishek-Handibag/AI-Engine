@@ -116,12 +116,26 @@ async def process_with_llm(scraped_data, question):
     all_content = prepare_content_for_analysis(scraped_data)
     relevant_content = find_relevant_content(all_content, question)
     
-    prompt = f"""Analyze the following data from multiple web pages in relation to this question: "{question}"
+    prompt = f"""Analyze the following data in relation to this question: "{question}"
 
-    {relevant_content}
-    Please provide a comprehensive, descriptive, and engaging response that directly addresses the question. Organize your answer with clear headings, subheadings, and bullet points to enhance readability. Break down complex ideas into simple terms, and include examples where relevant to clarify key points. Use bold or italics to emphasize important details. Ensure your response is thorough, informative, easy to understand, and directly related to the question, offering a complete yet concise summary.
-    Also don't mention data is given to you from which you are creating response,(don't mention things like "The provided data clearly indicates")"""
+{relevant_content}
 
+Please provide a comprehensive, descriptive, and engaging response that directly addresses the question. In your answer:
+
+1. Organize the information with clear headings and subheadings
+2. Use bullet points or numbered lists for key details
+3. Break down complex ideas into simple terms
+4. Include relevant examples to clarify important concepts
+5. Use **bold** or *italics* to emphasize crucial points
+6. Ensure your response is thorough, informative, and easy to understand
+7. Offer a complete yet concise summary directly related to the question
+8. Provide the detailed answer for the user query
+
+Important: 
+- If the provided data contains sufficient information, base your response on it.
+- If the provided data lacks proper information to answer the question fully, use your own knowledge to provide a comprehensive answer.
+- For logical, coding, or mathematical questions that may not have readily available answers, use your reasoning and problem-solving capabilities to provide a well-thought-out response.
+- Do not mention the source of your information in the response. Simply provide the answer as if you inherently possess the knowledge."""
     try:
         response = await asyncio.to_thread(model.generate_content, prompt)
         logger.info("LLM Analysis and Summary completed")

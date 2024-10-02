@@ -3,22 +3,23 @@ import {
   ThemeProvider,
   createTheme,
   CssBaseline,
-  Container,
   Typography,
   TextField,
   Button,
   CircularProgress,
-  Paper,
   Box,
   List,
   ListItem,
-  Divider,
-  Drawer,
-  IconButton,
   Card,
   CardContent,
   Fade,
+  Snackbar,
+  IconButton,
+  InputAdornment,
+  Paper
 } from "@mui/material";
+import CloseIcon from '@mui/icons-material/Close';
+import SendIcon from '@mui/icons-material/Send';
 import MenuIcon from "@mui/icons-material/Menu";
 import AddIcon from "@mui/icons-material/Add";
 import axios from "axios";
@@ -60,12 +61,11 @@ const TaskCards = ({ onCardClick }) => {
   return (
     <Box
       sx={{
-        bgcolor: "background.default",
-        minHeight: "100vh",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
+        height: "100%",
         p: 4,
       }}
     >
@@ -83,9 +83,11 @@ const TaskCards = ({ onCardClick }) => {
           gridTemplateColumns: {
             xs: "1fr",
             sm: "1fr 1fr",
-            lg: "1fr 1fr 1fr 1fr",
+            md: "1fr 1fr 1fr 1fr",
           },
           gap: 2,
+          maxWidth: "1000px",
+          width: "100%",
         }}
       >
         {taskCards.map((card, index) => (
@@ -94,7 +96,6 @@ const TaskCards = ({ onCardClick }) => {
             sx={{
               bgcolor: "background.paper",
               color: "text.primary",
-              width: 250,
               height: 120,
               display: "flex",
               flexDirection: "column",
@@ -230,6 +231,7 @@ const App = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [typing, setTyping] = useState(false);
+  const [openSnackbar, setOpenSnackbar] = useState(false);
   const typingTimeoutRef = useRef(null);
 
   const handleCardClick = (cardText) => {
@@ -255,9 +257,8 @@ const App = () => {
       }));
       setQuestion("");
     } catch (err) {
-      setError(
-        "An error occurred while processing your request. Please try again."
-      );
+      setError("An error occurred while processing your request. Please try again.");
+      setOpenSnackbar(true);
       console.error(err);
     } finally {
       setLoading(false);
@@ -275,6 +276,13 @@ const App = () => {
     }, 1000);
   };
 
+  const handleCloseSnackbar = (event, reason) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+    setOpenSnackbar(false);
+  };
+
   return (
     <ThemeProvider theme={darkTheme}>
       <CssBaseline />
@@ -290,7 +298,6 @@ const App = () => {
           sx={{
             flexGrow: 1,
             overflowY: "auto",
-            p: 3,
             "&::-webkit-scrollbar": {
               width: "0.4em",
             },
@@ -306,7 +313,7 @@ const App = () => {
           {currentConversation.messages.length === 0 ? (
             <TaskCards onCardClick={handleCardClick} />
           ) : (
-            <List>
+            <List sx={{ p: 3 }}>
               {currentConversation.messages.map((message, index) => (
                 <ListItem key={index} disableGutters>
                   <Message content={message.content} isUser={message.isUser} />
@@ -315,8 +322,8 @@ const App = () => {
             </List>
           )}
         </Box>
-        <Box sx={{ p: 3, flexGrow: 0 }}>
-          <form onSubmit={handleSubmit}>
+        <Box sx={{ p: 3, display: "flex", justifyContent: "center" }}>
+          <form onSubmit={handleSubmit} style={{ width: "100%", maxWidth: "800px" }}>
             <TextField
               fullWidth
               label="Enter your question"
@@ -329,41 +336,51 @@ const App = () => {
               }}
               InputProps={{
                 style: { color: "#ffffff" },
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <Button
+                      type="submit"
+                      variant="contained"
+                      color="primary"
+                      disabled={loading || !question}
+                      sx={{ minWidth: 'auto', p: '6px' }}
+                    >
+                      <SendIcon />
+                    </Button>
+                  </InputAdornment>
+                ),
               }}
             />
-            <Button
-              type="submit"
-              variant="contained"
-              color="primary"
-              disabled={loading || !question}
-              sx={{ mt: 2 }}
-            >
-              Generate
-            </Button>
           </form>
-          {(loading || typing) && (
-            <Fade in={loading || typing}>
-              <CircularProgress sx={{ mt: 2 }} />
-            </Fade>
-          )}
-          {error && (
-            <Fade in={!!error}>
-              <Paper
-                elevation={0}
-                sx={{
-                  mt: 2,
-                  p: 2,
-                  bgcolor: "error.dark",
-                  color: "error.contrastText",
-                  borderRadius: 2,
-                }}
-              >
-                <Typography>{error}</Typography>
-              </Paper>
-            </Fade>
-          )}
         </Box>
+        {(loading || typing) && (
+          <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
+            <Fade in={loading || typing}>
+              <CircularProgress />
+            </Fade>
+          </Box>
+        )}
       </Box>
+      <Snackbar
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'center',
+        }}
+        open={openSnackbar}
+        autoHideDuration={5000}
+        onClose={handleCloseSnackbar}
+        message={error}
+        action={
+          <IconButton
+            size="small"
+            aria-label="close"
+            color="inherit"
+            onClick={handleCloseSnackbar}
+          >
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        }
+      />
     </ThemeProvider>
   );
 };

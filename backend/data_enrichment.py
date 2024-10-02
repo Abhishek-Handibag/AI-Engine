@@ -149,7 +149,12 @@ def find_relevant_content(all_content, question):
     return relevant_content
 
 def split_into_chunks(text, chunk_size=1000):
-    sentences = sent_tokenize(text)
+    try:
+        sentences = sent_tokenize(text)
+    except LookupError:
+        logger.warning("NLTK punkt tokenizer not found. Falling back to simple sentence splitting.")
+        sentences = re.split(r'(?<=[.!?])\s+', text)
+    
     chunks = []
     current_chunk = ""
     for sentence in sentences:
